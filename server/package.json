@@ -1,0 +1,22 @@
+{
+  "name": "todo-app-fullstack",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.ts",
+    "seeder": "bun run src/seeder/seeder.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.1.1",
+    "@elysiajs/swagger": "^1.1.6",
+    "dotenv": "^16.4.7",
+    "elysia": "latest",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.2",
+    "todo-app-fullstack": "."
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/index.js"
+}
