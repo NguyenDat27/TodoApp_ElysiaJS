@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URL=mongodb+srv://Thanhdat:l1PQwayfhJAZUhwG@cluster0.e1jpi.mongodb.net/todoapp

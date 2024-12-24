@@ -12,7 +12,7 @@ connectDB();
 
 const app = new Elysia()
 
-  app.use(
+  .use(
     swagger({
       path: '/v1/swagger',
       documentation: {
@@ -22,10 +22,9 @@ const app = new Elysia()
         },
       },
     })
-  );
-  app.use(cors()) 
-
-  app.use(todoRouter)
+  )
+  .use(cors()) 
+  .use(todoRouter)
 
   .listen(3000)
 
