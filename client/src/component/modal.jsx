@@ -1,17 +1,15 @@
 import { Modal, Input, Checkbox, Form } from "antd";
 
-const CustomModal = ({ isOpen, onClose, onSubmit, isCreate }) => {
+const CustomModal = ({ isOpen, onClose, onSubmit, isCreate, initialValues }) => {
   const [form] = Form.useForm();
 
   const handleOk = () => {
     form.validateFields()
       .then(values => {
-        if (!isCreate) {
-            values.completed = values.completed ? 1 : 0;
-        } else {
-        values.completed = 0; 
-        }
-        onSubmit(values);
+        // Cập nhật giá trị hoàn thành khi người dùng chỉnh sửa
+        values.completed = values.completed ? 1 : 0;
+        
+        onSubmit(values); // Truyền dữ liệu đã chỉnh sửa cho onSubmit
         form.resetFields();
         onClose();
       })
@@ -27,7 +25,7 @@ const CustomModal = ({ isOpen, onClose, onSubmit, isCreate }) => {
       onCancel={onClose}
       onOk={handleOk}
     >
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" initialValues={initialValues}>
         <Form.Item
           label="Title"
           name="title"

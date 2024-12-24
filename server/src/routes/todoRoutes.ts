@@ -99,7 +99,7 @@ TodoRoutes.group("/api/v1/todos", (TodoRoutes) =>
         body: t.Object({
           title: t.String({ description: "Cập nhật tiêu đề cho todo"}),
           description: t.String({ description: "Cập nhật mô tả cho todo"}),
-          todo_id: t.Number({ description: "Cập nhật trạng thái cho todo (0 là chưa làm, 1 là đã làm)"})
+          completed: t.Number({ description: "Cập nhật trạng thái cho todo (0 là chưa làm, 1 là đã làm)"})
         })
       }
     )

@@ -1,11 +1,12 @@
 import Todo from "../component/todo";
 import { useTodo } from "../store/todoStore";
-import { getAllTodos } from '../api/TodoApi';
+import { getAllTodos, percentTodo } from '../api/TodoApi';
 import { useEffect } from 'preact/hooks';
 
 const ShowTodo = () => {
 
   const [todos, setTodos] = useTodo.todos();
+  const [_, setPercent] = useTodo.percent();
 
   useEffect(() => {
 
@@ -13,6 +14,9 @@ const ShowTodo = () => {
       try {
         const data = await getAllTodos();
         setTodos(data);
+        const percent = await percentTodo();
+        const roundedPercent = percent.toFixed(1);
+        setPercent(roundedPercent);
       } catch (error) {
         console.log(error);
       }

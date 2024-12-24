@@ -3,6 +3,7 @@ import CustomButton from '../component/button'
 import CustomModal from '../component/modal';
 import { useTodo } from '../store/todoStore';
 import { createTodo, getAllTodos } from '../api/TodoApi';
+import { message } from 'antd';
 
 const Create = () => {
 
@@ -15,8 +16,9 @@ const Create = () => {
           message.success("Thêm todo thành công!");
           console.log("Todo created:", result);
           setIsModalOpen(false);
-          const data = getAllTodos();
-          setTodos(data);
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } catch (error) {
           message.error("Lỗi khi thêm todo!");
         }

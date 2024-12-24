@@ -1,14 +1,18 @@
 import ShowTodo from './showTodo'
 import Header from '../component/header'
-import Search from './search';
+import SearchByTitle from './search';
 import Create from './create';
+import TodoStatusFilter from './checkbox';
+import ProgressCircle from './percent';
 
 const App = () => {
 
   return (
     <div className="bg-background">
       <Header/>
-      <Search/>
+      <ProgressCircle/>
+      <SearchByTitle/>
+      <TodoStatusFilter/>
       <Create/>
       <ShowTodo/>
     </div>

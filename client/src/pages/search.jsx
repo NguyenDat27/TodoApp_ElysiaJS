@@ -2,7 +2,7 @@ import { useTodo } from "../store/todoStore";
 import { getTodoBySearch, getAllTodos } from "../api/TodoApi";
 import { Input } from "antd";
 
-const SearchComponent = () => {
+const SearchByTitle = () => {
   const [todos, setTodos] = useTodo.todos();
   const [keyword, setKeyword] = useTodo.keyword();
 
@@ -33,9 +33,10 @@ const SearchComponent = () => {
           onSearch={(key) => handleSearchChange(key)}
           enterButton
           allowClear
+          style={{ fontSize: "18px" }}
         />
     </div>
   );
 };
 
-export default SearchComponent;
+export default SearchByTitle;
