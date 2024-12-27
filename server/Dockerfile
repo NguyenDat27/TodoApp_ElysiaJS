@@ -5,7 +5,7 @@ FROM oven/bun:latest
 WORKDIR /app
 
 # Copy file package.json, bun.lockb và .env
-COPY package.json bun.lockb .env ./
+COPY package.json bun.lockb ./
 
 # Cài đặt các package
 RUN bun install

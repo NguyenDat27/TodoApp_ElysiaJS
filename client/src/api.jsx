@@ -1,4 +1,6 @@
-const urlServer = "http://localhost:3000/api/v1/todos"
+const urlServer = "https://k76p4lwd-3000.asse.devtunnels.ms/api/v1/todos"
+
+// const urlServer = "http://localhost:3000/api/v1/todos"
 
 // Lấy tất cả todo
 export const apiGetAllTodos = `${urlServer}/todos`
