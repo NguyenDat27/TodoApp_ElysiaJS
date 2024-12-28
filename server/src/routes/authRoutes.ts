@@ -13,14 +13,23 @@ interface LoginBody {
   password: string;
 }
 
+interface ChangePasswordBody {
+  oldPassword: string;
+  newPassword: string;
+}
+
 interface JwtPayload {
   id: string;
   username: string;
 }
 
 interface JwtContext extends Context {
-  jwt: {
-    sign: (payload: object) => Promise<string>;
+  jwtAccessToken: {
+    sign: (payload: object, options?: object) => Promise<string>;
+    verify: (token: string) => Promise<JwtPayload | null>;
+  };
+  jwtRefreshToken: {
+    sign: (payload: object, options?: object) => Promise<string>;
     verify: (token: string) => Promise<JwtPayload | null>;
   };
   cookie: Record<string, Cookie<string | undefined>>;
@@ -56,6 +65,7 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
         };
       } catch (err) {
         set.status = 500;
+        console.log(err);
         return { 
           status: 500,
           message: "Lỗi mạng nội bộ" 
@@ -73,7 +83,7 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
     })
 
     // Đăng nhập
-    .post("/login", async ({ body, set, jwt, cookie: { auth } }: { body: LoginBody, set: { status: number }, jwt: JwtContext['jwt'], cookie: JwtContext["cookie"] }) => {
+    .post("/login", async ({ body, set, jwtAccessToken, jwtRefreshToken, cookie: { auth, id } }: { body: LoginBody, set: { status: number }, jwtAccessToken: JwtContext['jwtAccessToken'], jwtRefreshToken: JwtContext['jwtRefreshToken'], cookie: JwtContext["cookie"] }) => {
       const { username, password } = body;
       try {
         const user = await User.findOne({ username });
@@ -92,18 +102,32 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
             message: "Sai mật khẩu!!!" 
           };
         }
-        const token = await jwt.sign({ id: user._id, username: user.username });
+        const accessToken = await jwtAccessToken.sign({ id: user._id, username: user.username });
+        const refreshToken = await jwtRefreshToken.sign({ id: user._id, username: user.username });
+
+        // Lưu refresh token vào cơ sở dữ liệu
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        // Lưu accessToken vào cookies
         auth.set({
-          value: token,
+          value: accessToken,
           httpOnly: true,
-          maxAge: 7 * 86400,
-          path: '/',
+          maxAge: 1 * 60 * 60, // 1 hour
         });
+
+        id.set({
+          value: user._id,
+          httpOnly: true,
+          maxAge:  7 * 24 * 60 * 60, // 7 days
+        })
+
         set.status = 200;
         return { 
           status: 200,
-          token: token,
-         };
+          accessToken: accessToken,
+          message: "Đăng nhập thành công"
+        };
       } catch (err) {
         set.status = 500;
         return {
@@ -123,9 +147,9 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
     })
 
     // Đăng xuất
-    .post("/logout", async ({ set, jwt, headers, cookie: { auth } }: { set: { status: number }, jwt: JwtContext['jwt'], headers: JwtContext["headers"], cookie: JwtContext["cookie"] }) => {
+    .post("/logout", async ({ set, jwtAccessToken, jwtRefreshToken, headers, cookie: { auth, id } }: { set: { status: number }, jwtAccessToken: JwtContext['jwtAccessToken'], jwtRefreshToken: JwtContext["jwtRefreshToken"], headers: JwtContext["headers"], cookie: JwtContext["cookie"] }) => {
       try {
-        const authResult = await authMiddleware(headers, jwt);
+        const authResult = await authMiddleware(headers, jwtAccessToken, jwtRefreshToken, auth, id );
         if (authResult.status !== 200) {
           set.status = authResult.status;
           return authResult;
@@ -137,23 +161,90 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
             maxAge: 0,
             path: '/',
           });
+          id.set({
+            value: '',
+            httpOnly: true,
+            maxAge: 0,
+            path: '/',
+          });
           set.status = 200;
           return { 
             status: 200,
-            message: "Đăng xuất thành công" };
-        }      
+            message: "Đăng xuất thành công"
+          };
+        }
       } catch (err) {
         set.status = 500;
         return {
           status: 500,
-          message: "Lỗi mạng nội bộ" 
+          message: "Lỗi mạng nội bộ"
         };
       }
     }, {
       detail: {
         summary: "Đăng xuất người dùng",
         tags: ["Auth"]
+      },
+    })
+
+    //Đổi mật khẩu
+    .post("/change-password", async ({ body, set, jwtAccessToken, jwtRefreshToken, headers, cookie: { auth, id} }: { body: ChangePasswordBody, set: { status: number }, jwtAccessToken: JwtContext['jwtAccessToken'], jwtRefreshToken: JwtContext["jwtRefreshToken"], headers: JwtContext["headers"], cookie: JwtContext["cookie"] }) => {
+      const { oldPassword, newPassword } = body;
+      try {
+        const authResult = await authMiddleware(headers, jwtAccessToken, jwtRefreshToken, auth, id);
+        if (authResult.status !== 200) {
+          set.status = authResult.status;
+          return authResult;
+        }
+
+        const payload = authResult.payload;
+        console.log("Payload", payload);
+        
+        if (payload) {
+          const user = await User.findById(payload.id);
+          if (!user) {
+            set.status = 404;
+            return { 
+              status: 404,
+              message: "Người dùng không tồn tại" 
+            };
+          }
+
+          const isMatch = await bcrypt.compare(oldPassword, user.password);
+          if (!isMatch) {
+            set.status = 400;
+            return { 
+              status: 400,
+              message: "Mật khẩu cũ không đúng" 
+            };
+          }
+
+          const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+          user.password = hashedNewPassword;
+          await user.save();
+
+          set.status = 200;
+          return { 
+            status: 200,
+            message: "Đổi mật khẩu thành công" 
+          };
+        }
+      } catch (err) {
+        set.status = 500;
+        return { 
+          status: 500,
+          message: "Lỗi mạng nội bộ" 
+        };
       }
+    }, {
+      detail: {
+        summary: "Đổi mật khẩu người dùng",
+        tags: ["Auth"]
+      }, 
+      body: t.Object({
+        oldPassword: t.String({ description: "Mật khẩu cũ của người dùng" }),
+        newPassword: t.String({ description: "Mật khẩu mới của người dùng" }),
+      })
     })
 );
 

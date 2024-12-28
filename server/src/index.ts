@@ -10,11 +10,6 @@ import AuthRoutes from './routes/authRoutes';
 // Tải biến môi trường từ tệp .env
 dotenv.config();
 
-// Kiểm tra biến môi trường JWT_SECRET
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined in the environment variables');
-}
-
 // Kết nối DB
 connectDB();
 
@@ -46,11 +41,19 @@ const app = new Elysia()
   )
   .use(cors())
   .use(jwt({
-    name: 'jwt',
-    secret: process.env.JWT_SECRET,
+    name: 'jwtAccessToken',
+    secret: process.env.JWT_ACCESS_SECRET || "",
     algorithms: ['HS256'],
-    exp: '1d',
+    exp: process.env.JWT_ACCESS_EXP // Thời gian sống của access token
   }))
+
+  .use(jwt({
+    name: 'jwtRefreshToken',
+    secret: process.env.JWT_REFRESH_SECRET || "",
+    algorithms: ['HS256'],
+    exp: process.env.JWT_REFRESH_EXP // Thời gian sống của refresh token
+  }))
+  
   .use(AuthRoutes)
   .use(TodoRoutes)
 
