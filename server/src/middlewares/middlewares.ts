@@ -29,17 +29,23 @@ export const authMiddleware = async (headers: JwtContext["header"], jwtAccessTok
     };
   }
   const accessToken = authHeader.split(' ')[1];
+
+  if (accessToken === "YOUR_SECRET_TOKEN") {
+    return { 
+      status: 401,
+      payload: null,
+      message: "Token không tồn tại trong Authorization header" 
+    };
+  }
+
   try {
 
     const payloadAccess = await jwtAccessToken.verify(accessToken);
-    console.log("access", payloadAccess);
-
     if (!payloadAccess) {
 
       // Kiểm tra user trong cơ sở dữ liệu
       const userId = id.value ? id.value.replace(/"/g, '') : '';
       const user = await User.findById(userId);
-      console.log("user", user);
       if (!user || !user.refreshToken) {
         return { 
           status: 404,
@@ -50,8 +56,6 @@ export const authMiddleware = async (headers: JwtContext["header"], jwtAccessTok
 
       // Kiem tra refresh token
       const payloadRefresh = await jwtRefreshToken.verify(user.refreshToken.toString());
-      console.log("refresh", payloadRefresh);
-
       if (!payloadRefresh) {
         return { 
           status: 401,
@@ -75,13 +79,13 @@ export const authMiddleware = async (headers: JwtContext["header"], jwtAccessTok
         payload: payloadAccess,
         message: "Access token mới đã được tạo"
       };
-
+    } else {
+      return { 
+        status: 200,
+        payload: payloadAccess,
+        message: "Access token hợp lệ"
+      };
     }
-    return { 
-      status: 200,
-      payload: payloadAccess,
-      message: "Access token hợp lệ"
-    };
   } catch (error) {
     return { 
       status: 401,

@@ -86,7 +86,7 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
     .post("/login", async ({ body, set, jwtAccessToken, jwtRefreshToken, cookie: { auth, id } }: { body: LoginBody, set: { status: number }, jwtAccessToken: JwtContext['jwtAccessToken'], jwtRefreshToken: JwtContext['jwtRefreshToken'], cookie: JwtContext["cookie"] }) => {
       const { username, password } = body;
       try {
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username: username });
         if (!user) {
           set.status = 404;
           return { 
@@ -130,6 +130,7 @@ AuthRoutes.group("/api/v1/auth", (AuthRoutes) =>
         };
       } catch (err) {
         set.status = 500;
+        console.log(err);
         return {
           status: 500,
           message: "Lỗi mạng nội bộ" 
