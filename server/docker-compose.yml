@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      MONGODB_URI: "mongodb://root:123456@mongodb:27017/todoapp?authSource=admin"
+    env_file:
+      - .env
     volumes:
       - .:/app
       - /app/node_modules
@@ -22,9 +22,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: 123456
+    env_file:
+      - .env
 
 volumes:
   mongo-data:
